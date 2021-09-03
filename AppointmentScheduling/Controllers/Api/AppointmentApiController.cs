@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace AppointmentScheduling.Controllers.Api
 {
-    [Route("api/Appointment")] 
+    [Route("api/Appointment")]
     [ApiController] //ovo je api endpoint
     public class AppointmentApiController : Controller
     {
@@ -36,7 +36,7 @@ namespace AppointmentScheduling.Controllers.Api
             try
             {
                 commonResponse.status = _appointmentService.AddUpdate(data).Result;
-                if(commonResponse.status == 1)
+                if (commonResponse.status == 1)
                 {
                     commonResponse.message = Helper.appointmentUpdated;
                 }
@@ -49,6 +49,110 @@ namespace AppointmentScheduling.Controllers.Api
             {
                 commonResponse.message = e.Message;
                 commonResponse.status = Helper.failure_code;
+            }
+
+            return Ok(commonResponse);
+        }
+
+        [HttpGet]
+        [Route("GetCalendarData")]
+        public IActionResult GetCalendarData(string doctorId)
+        {
+            CommonResponse<List<AppointmentVM>> commonResponse = new CommonResponse<List<AppointmentVM>>();
+            try
+            {
+                if (role == Helper.Patient)
+                {
+                    commonResponse.dataenum = _appointmentService.PatientsEventsById(loginUserId);
+                    commonResponse.status = Helper.success_code;
+                }
+                else if (role == Helper.Doctor)
+                {
+                    commonResponse.dataenum = _appointmentService.DoctorsEventsById(loginUserId);
+                    commonResponse.status = Helper.success_code;
+                }
+                else
+                {
+                    commonResponse.dataenum = _appointmentService.DoctorsEventsById(doctorId);
+                    commonResponse.status = Helper.success_code;
+                }
+            }
+            catch (Exception e)
+            {
+                commonResponse.message = e.Message;
+                commonResponse.status = Helper.failure_code;
+
+            }
+
+            return Ok(commonResponse);
+        }
+
+        [HttpGet]
+        [Route("GetCalendarDataById/{id}")]
+        public IActionResult GetCalendarDataById(int id)
+        {
+            CommonResponse<AppointmentVM> commonResponse = new CommonResponse<AppointmentVM>();
+            try
+            {
+
+                commonResponse.dataenum = _appointmentService.GetById(id);
+                commonResponse.status = Helper.success_code;
+            }
+            catch (Exception e)
+            {
+                commonResponse.message = e.Message;
+                commonResponse.status = Helper.failure_code;
+
+            }
+
+            return Ok(commonResponse);
+        }
+
+        [HttpGet]
+        [Route("DeleteAppointment/{id}")]
+        public async Task<IActionResult> DeleteAppointment(int id)
+        {
+            CommonResponse<int> commonResponse = new CommonResponse<int>();
+            try
+            {
+
+                commonResponse.status = await _appointmentService.Delete(id);
+                commonResponse.message = commonResponse.status == 1 ? Helper.appointmentDeleted : Helper.somethingWentWrong;
+            }
+            catch (Exception e)
+            {
+                commonResponse.message = e.Message;
+                commonResponse.status = Helper.failure_code;
+
+            }
+
+            return Ok(commonResponse);
+        }
+
+        [HttpGet]
+        [Route("ConfirmEvent/{id}")]
+        public async Task<IActionResult> ConfirmEvent(int id)
+        {
+            CommonResponse<int> commonResponse = new CommonResponse<int>();
+            try
+            {
+                var result = await _appointmentService.ConfirmEvent(id);
+                if(result > 0)
+                {
+                    commonResponse.status = Helper.success_code;
+                    commonResponse.message = Helper.meetingConfirm;
+                }
+                else
+                {
+                    commonResponse.status = Helper.failure_code;
+                    commonResponse.message = Helper.meetingConfirmError;
+                }
+            }
+            catch (Exception e)
+            {
+                commonResponse.message = e.Message;
+                commonResponse.status = Helper.failure_code;
+
             }
 
             return Ok(commonResponse);
